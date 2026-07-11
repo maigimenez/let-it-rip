@@ -1,0 +1,1069 @@
+<!doctype html>
+<title>Let It Rip — DDPM from Scratch in JAX</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+/* ── tokens ─────────────────────────────────────────────────────────── */
+:root {
+  --bg:         #0c0d14;
+  --surface:    #13151f;
+  --border:     #22253a;
+  --text:       #dde0f0;
+  --muted:      #5a5d78;
+  --accent:     #a8d832;
+  --amber:      #f59e0b;
+  --hot-bg:     #090f09;
+  --hot-border: #1e3b14;
+  --hot-accent: #7dc520;
+  --code-bg:    #191c2c;
+  --mono: 'SF Mono','Fira Code','Cascadia Code','Menlo',monospace;
+  --sans: -apple-system,'Helvetica Neue',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: light) { :root {
+  --bg:         #f2f3f8;
+  --surface:    #ffffff;
+  --border:     #d8dbe8;
+  --text:       #0c0d14;
+  --muted:      #868aa8;
+  --accent:     #3d6e08;
+  --amber:      #b36d00;
+  --hot-bg:     #edf7e5;
+  --hot-border: #9dd67a;
+  --hot-accent: #3d6e08;
+  --code-bg:    #e4e7f4;
+}}
+:root[data-theme="dark"]  { --bg:#0c0d14;--surface:#13151f;--border:#22253a;--text:#dde0f0;--muted:#5a5d78;--accent:#a8d832;--amber:#f59e0b;--hot-bg:#090f09;--hot-border:#1e3b14;--hot-accent:#7dc520;--code-bg:#191c2c; }
+:root[data-theme="light"] { --bg:#f2f3f8;--surface:#ffffff;--border:#d8dbe8;--text:#0c0d14;--muted:#868aa8;--accent:#3d6e08;--amber:#b36d00;--hot-bg:#edf7e5;--hot-border:#9dd67a;--hot-accent:#3d6e08;--code-bg:#e4e7f4; }
+
+/* ── reset ───────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text); font-family: var(--sans); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ── math helpers ────────────────────────────────────────────────────── */
+sub, sup {
+  font-size: .7em;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+sub { bottom: -.28em; }
+sup { top: -.5em; }
+
+/* radical bar — write √<span class="rad">expr</span> */
+.rad {
+  border-top: 1.5px solid currentColor;
+  padding-top: 1px;
+  margin-left: .12em;
+  display: inline;
+}
+
+/* inline fraction */
+.frac {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  font-size: .82em;
+  margin: 0 .15em;
+  line-height: 1.25;
+}
+.frac .num {
+  border-bottom: 1px solid currentColor;
+  padding: 0 .2em .05em;
+  white-space: nowrap;
+  text-align: center;
+}
+.frac .den { padding: .05em .2em 0; white-space: nowrap; text-align: center; }
+
+/* ── slide container ─────────────────────────────────────────────────── */
+#deck { position: relative; width: 100vw; height: 100vh; }
+
+.slide {
+  position: absolute; inset: 0;
+  display: none;
+  flex-direction: column;
+  background: var(--bg);
+  padding: clamp(2rem,5vw,4.5rem) clamp(2rem,6vw,6rem);
+}
+.slide.active { display: flex; }
+.slide.hot { background: var(--hot-bg); border-top: 3px solid var(--hot-border); }
+.slide.session { align-items: center; justify-content: center; text-align: center; }
+
+/* ── header strip ────────────────────────────────────────────────────── */
+.slide-header {
+  display: flex; align-items: center; gap: 1rem;
+  margin-bottom: clamp(1.5rem,4vh,3rem); flex-shrink: 0;
+}
+.session-tag {
+  font-family: var(--mono); font-size: .65rem; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; padding: .25em .7em;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  color: var(--accent); white-space: nowrap;
+}
+.session-tag.s2 { background: color-mix(in srgb, var(--amber) 15%, transparent); color: var(--amber); }
+.session-tag.hot { background: color-mix(in srgb, var(--hot-accent) 20%, transparent); color: var(--hot-accent); }
+.timing { font-family: var(--mono); font-size: .65rem; color: var(--muted); margin-left: auto; letter-spacing: .06em; }
+
+/* ── typography ──────────────────────────────────────────────────────── */
+.slide-title {
+  font-family: var(--mono); font-size: clamp(1.6rem,3.5vw,2.8rem);
+  font-weight: 700; line-height: 1.15; color: var(--text);
+  text-wrap: balance; margin-bottom: clamp(1rem,3vh,2rem);
+}
+.slide-title .hl  { color: var(--accent); }
+.slide-title .hl2 { color: var(--amber); }
+.hot .slide-title .hl { color: var(--hot-accent); }
+
+.slide-body {
+  flex: 1; display: flex; flex-direction: column;
+  justify-content: flex-start; gap: 1.1rem;
+  font-size: clamp(.95rem,1.6vw,1.15rem); line-height: 1.65;
+}
+
+ul { list-style: none; display: flex; flex-direction: column; gap: .6rem; }
+ul li { display: flex; gap: .75rem; align-items: flex-start; }
+ul li::before { content: '–'; color: var(--accent); font-family: var(--mono); flex-shrink: 0; margin-top: .05em; }
+.hot ul li::before { color: var(--hot-accent); }
+.s2-color ul li::before { color: var(--amber); }
+
+.label {
+  font-family: var(--mono); font-size: .7rem; font-weight: 600;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: .4rem;
+}
+
+/* ── formula blocks ──────────────────────────────────────────────────── */
+.formula-block {
+  background: var(--code-bg); border: 1px solid var(--border);
+  border-left: 3px solid var(--amber); border-radius: 4px;
+  padding: 1.1rem 1.4rem;
+  font-family: var(--mono); font-size: clamp(.85rem,1.4vw,1.05rem);
+  line-height: 2.2; color: var(--text); overflow-x: auto;
+}
+.formula-block .m  { color: var(--amber); }  /* math/formula color */
+.formula-block .s  { color: var(--accent); } /* symbol/code color */
+.formula-block .d  { color: var(--muted); }  /* dim / comment */
+
+.formula-centered {
+  font-family: var(--mono); font-size: clamp(.95rem,2vw,1.35rem);
+  color: var(--amber); text-align: center;
+  padding: 1.4rem 1rem; background: var(--code-bg);
+  border: 1px solid var(--border); border-left: 3px solid var(--amber);
+  border-radius: 4px; line-height: 2.2;
+}
+.formula-centered .s   { color: var(--accent); }
+.formula-centered .dim { color: var(--muted); font-size: .82em; display: block; margin-top: .3rem; }
+
+code, .inline-code {
+  font-family: var(--mono); font-size: .88em;
+  background: var(--code-bg); padding: .15em .45em; border-radius: 3px; color: var(--accent);
+}
+
+/* ── layout helpers ──────────────────────────────────────────────────── */
+.two-col   { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 1.2rem 1.4rem; }
+.card .card-head { font-family: var(--mono); font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent); margin-bottom: .7rem; }
+.card .card-head.a2 { color: var(--amber); }
+
+.pill { display: inline-flex; align-items: center; gap: .4rem; font-family: var(--mono); font-size: .7rem; font-weight: 600; letter-spacing: .06em; padding: .3em .8em; border-radius: 20px; border: 1px solid var(--border); color: var(--muted); }
+.pill.nb    { border-color: var(--accent); color: var(--accent); }
+.pill.nb.a2 { border-color: var(--amber);  color: var(--amber); }
+
+/* ── title slide ─────────────────────────────────────────────────────── */
+.slide.title-slide { align-items: flex-start; justify-content: flex-end; padding-bottom: clamp(3rem,7vh,6rem); }
+.big-title { font-family: var(--mono); font-weight: 700; line-height: 1.05; text-wrap: balance; }
+.big-title .word1 { font-size: clamp(3rem,8vw,7rem); display: block; color: var(--muted); }
+.big-title .word2 { font-size: clamp(3rem,8vw,7rem); display: block; color: var(--accent); }
+.big-title .subtitle { display: block; font-size: clamp(1rem,1.8vw,1.4rem); color: var(--text); margin-top: 1.2rem; font-weight: 400; letter-spacing: .01em; }
+.meta-row { display: flex; align-items: center; gap: 1.5rem; margin-top: 2rem; font-size: .85rem; color: var(--muted); font-family: var(--mono); }
+.meta-row .accent { color: var(--accent); }
+.noise-canvas { position: absolute; inset: 0; opacity: .04; pointer-events: none; }
+
+/* ── session divider ─────────────────────────────────────────────────── */
+.session-num { font-family: var(--mono); font-size: clamp(6rem,18vw,14rem); font-weight: 700; line-height: 1; color: color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -55%); white-space: nowrap; }
+.session-label { font-family: var(--mono); font-size: clamp(1.2rem,2.5vw,2rem); font-weight: 700; color: var(--accent); position: relative; z-index: 1; text-wrap: balance; text-align: center; padding: 0 2rem; }
+.session-sublabel { font-family: var(--sans); font-size: clamp(.85rem,1.4vw,1.05rem); color: var(--muted); margin-top: .8rem; position: relative; z-index: 1; }
+.session-divider.s2 .session-num   { color: color-mix(in srgb, var(--amber) 12%, transparent); }
+.session-divider.s2 .session-label { color: var(--amber); }
+
+/* ── hands-on ────────────────────────────────────────────────────────── */
+.exercise-list { display: flex; flex-direction: column; gap: .7rem; }
+.exercise-item { display: flex; align-items: center; gap: 1rem; background: var(--surface); border: 1px solid var(--hot-border); border-radius: 5px; padding: .8rem 1rem; }
+.exercise-num  { font-family: var(--mono); font-size: .75rem; font-weight: 700; color: var(--hot-accent); min-width: 2rem; }
+.exercise-fn   { font-family: var(--mono); font-size: .9rem; color: var(--text); }
+.exercise-fn .arg { color: var(--muted); }
+.time-badge { margin-left: auto; font-family: var(--mono); font-size: .7rem; font-weight: 700; letter-spacing: .06em; padding: .25em .7em; border-radius: 20px; background: color-mix(in srgb, var(--hot-accent) 18%, transparent); color: var(--hot-accent); white-space: nowrap; }
+
+/* ── diagram ─────────────────────────────────────────────────────────── */
+.diagram { font-family: var(--mono); font-size: clamp(.7rem,1.1vw,.85rem); line-height: 1.7; background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: 1rem 1.3rem; color: var(--text); overflow-x: auto; white-space: pre; }
+.diagram .dim { color: var(--muted); }
+.diagram .hi  { color: var(--accent); }
+.diagram .hi2 { color: var(--amber); }
+
+/* ── progress + nav ──────────────────────────────────────────────────── */
+#progress { position: fixed; bottom: 0; left: 0; height: 2px; background: var(--accent); transition: width .25s ease; z-index: 100; }
+#nav { position: fixed; bottom: 1.2rem; right: 1.5rem; display: flex; align-items: center; gap: .6rem; font-family: var(--mono); font-size: .7rem; color: var(--muted); z-index: 100; }
+#counter { letter-spacing: .06em; }
+.nav-btn { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 3px; padding: .25em .6em; cursor: pointer; font-size: .8rem; line-height: 1; transition: border-color .15s, color .15s; }
+.nav-btn:hover { border-color: var(--accent); color: var(--accent); }
+.nav-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#theme-btn { background: none; border: 1px solid var(--border); border-radius: 3px; color: var(--muted); cursor: pointer; padding: .25em .5em; font-size: .75rem; line-height: 1; }
+#theme-btn:hover { color: var(--text); }
+
+/* ── overview table ──────────────────────────────────────────────────── */
+.overview-row { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: .6rem 1.2rem; padding: .6rem 0; border-bottom: 1px solid var(--border); font-size: clamp(.8rem,1.3vw,1rem); }
+.overview-row:last-child { border-bottom: none; }
+.nb-badge { font-family: var(--mono); font-size: .68rem; font-weight: 700; padding: .2em .55em; border-radius: 3px; background: color-mix(in srgb, var(--accent) 15%, transparent); color: var(--accent); white-space: nowrap; }
+.nb-badge.s2 { background: color-mix(in srgb, var(--amber) 15%, transparent); color: var(--amber); }
+.nb-topic { color: var(--text); }
+.nb-detail { color: var(--muted); font-size: .88em; }
+.nb-dur { font-family: var(--mono); font-size: .68rem; color: var(--muted); text-align: right; white-space: nowrap; }
+</style>
+
+<canvas class="noise-canvas" id="noise"></canvas>
+<div id="deck">
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 1 — Title
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide title-slide active" data-idx="1">
+  <div class="big-title">
+    <span class="word1">let it</span>
+    <span class="word2">rip.</span>
+    <span class="subtitle">DDPM from Scratch in JAX</span>
+  </div>
+  <div class="meta-row">
+    <span>Mai Giménez</span>
+    <span>·</span>
+    <span class="accent">EuroPython 2026</span>
+    <span>·</span>
+    <span>2 × 90 min</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 2 — What you'll build
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-idx="2">
+  <div class="slide-header">
+    <span class="session-tag">Overview</span>
+    <span class="timing">0:05</span>
+  </div>
+  <div class="slide-title">What you'll <span class="hl">build</span></div>
+  <div class="slide-body">
+    <div class="two-col">
+      <div>
+        <div class="label">By the end of session 2</div>
+        <ul style="margin-top:.8rem">
+          <li>A working class-conditional image generator</li>
+          <li>Trained on CIFAR-10 from scratch</li>
+          <li>DiT architecture</li>
+          <li>DDIM sampler: 50 steps, deterministic</li>
+          <li>Classifier-Free Guidance: control class, strength</li>
+        </ul>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:1rem">
+        <div class="card">
+          <div class="card-head">6 notebooks</div>
+          <div style="font-size:.88rem;color:var(--muted);line-height:1.7">JAX basics → forward process → denoiser → sampling → CFG → DiT</div>
+        </div>
+        <div class="card">
+          <div class="card-head a2">What you need</div>
+          <div style="font-size:.88rem;color:var(--muted);line-height:1.7">Python + JAX basics • A GPU (Colab free tier is fine) • Curiosity</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 3 — The plan
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-idx="3">
+  <div class="slide-header">
+    <span class="session-tag">Overview</span>
+    <span class="timing">0:08</span>
+  </div>
+  <div class="slide-title">The <span class="hl">plan</span></div>
+  <div class="slide-body">
+    <div class="overview-row" style="border-bottom:1px solid var(--border);padding-bottom:.8rem;margin-bottom:.4rem">
+      <span style="font-family:var(--mono);font-size:.68rem;font-weight:700;color:var(--accent)">SESSION 1</span>
+      <span></span>
+      <span style="font-weight:600">From Signal to Noise and Back</span>
+      <span class="nb-dur">90 min</span>
+    </div>
+    <div class="overview-row"><span class="nb-badge">NB01</span><span class="nb-topic">JAX basics</span><span class="nb-detail">jit · vmap · PRNG</span><span class="nb-dur">15 min</span></div>
+    <div class="overview-row"><span class="nb-badge">NB02</span><span class="nb-topic">Forward process</span><span class="nb-detail">noise schedules · closed-form jump</span><span class="nb-dur">30 min</span></div>
+    <div class="overview-row"><span class="nb-badge">NB03</span><span class="nb-topic">Reverse process</span><span class="nb-detail">MLP denoiser · training loop</span><span class="nb-dur">40 min</span></div>
+    <div class="overview-row" style="border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:.8rem 0;margin:.4rem 0">
+      <span style="font-family:var(--mono);font-size:.68rem;font-weight:700;color:var(--amber)">SESSION 2</span>
+      <span></span>
+      <span style="font-weight:600">Sampling, Guidance &amp; Scale</span>
+      <span class="nb-dur">90 min</span>
+    </div>
+    <div class="overview-row"><span class="nb-badge s2">NB04</span><span class="nb-topic">Sampling</span><span class="nb-detail">DDPM · DDIM</span><span class="nb-dur">30 min</span></div>
+    <div class="overview-row"><span class="nb-badge s2">NB05</span><span class="nb-topic">CFG</span><span class="nb-detail">class conditioning · guidance scale</span><span class="nb-dur">28 min</span></div>
+    <div class="overview-row"><span class="nb-badge s2">NB06</span><span class="nb-topic">DiT</span><span class="nb-detail">patches · AdaLN · Flax NNX</span><span class="nb-dur">32 min</span></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 4 — JAX in 90 seconds
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-idx="4">
+  <div class="slide-header">
+    <span class="session-tag">Session 1 · NB01</span>
+    <span class="timing">0:10</span>
+  </div>
+  <div class="slide-title">JAX in <span class="hl">90 seconds</span></div>
+  <div class="slide-body">
+    <div class="three-col">
+      <div class="card">
+        <div class="card-head">jit</div>
+        <div style="font-size:.85rem;color:var(--muted);line-height:1.65">Compile a function to XLA. First call traces; subsequent calls are fast.</div>
+        <div class="formula-block" style="margin-top:.8rem;font-size:.8rem">
+          <span class="s">@jax.jit</span><br>
+          def f(x): ...<br>
+          <span class="m">f(x)  # compiled</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">vmap</div>
+        <div style="font-size:.85rem;color:var(--muted);line-height:1.65">Vectorise a function over a batch axis. Write single-sample logic; vmap batches it.</div>
+        <div class="formula-block" style="margin-top:.8rem;font-size:.8rem">
+          <span class="s">jax.vmap</span>(f)<br>
+          <span class="m">  (x_batch)</span><br>
+          <span class="d"># no loop needed</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head">PRNG</div>
+        <div style="font-size:.85rem;color:var(--muted);line-height:1.65">Explicit random state. Split keys to get independent streams; never reuse a key.</div>
+        <div class="formula-block" style="margin-top:.8rem;font-size:.8rem">
+          key = <span class="s">jr.PRNGKey</span>(0)<br>
+          key, sk = <span class="s">jr.split</span>(key)<br>
+          <span class="m">jr.normal(sk, (4,))</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 5 — Hands-on NB01
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide hot" data-idx="5">
+  <div class="slide-header">
+    <span class="session-tag hot">Hands-on · NB01</span>
+    <span class="timing">0:15</span>
+  </div>
+  <div class="slide-title">JAX basics <span class="hl">exercises</span></div>
+  <div class="slide-body">
+    <div class="exercise-list">
+      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">jit_fn<span class="arg">()</span></span><span style="color:var(--muted);font-size:.88rem">— compile a function and verify it runs faster on the second call</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">vmap_fn<span class="arg">()</span></span><span style="color:var(--muted);font-size:.88rem">— vectorise a single-sample function over a batch</span><span class="time-badge">5 min</span></div>
+    </div>
+    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:.85rem;font-family:var(--mono)">open notebooks/01_jax_basics.ipynb</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 6 — Diffusion: the idea
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-idx="6">
+  <div class="slide-header">
+    <span class="session-tag">Session 1 · Forward</span>
+    <span class="timing">0:25</span>
+  </div>
+  <div class="slide-title">Diffusion: <span class="hl">the idea</span></div>
+  <div class="slide-body">
+    <div class="two-col">
+      <div>
+        <div class="label">Forward process (training data)</div>
+        <ul style="margin-top:.8rem">
+          <li>Start with a clean image x<sub>0</sub></li>
+          <li>Add a little Gaussian noise — T=1000 times</li>
+          <li>At the end: pure noise x<sub>T</sub> ~ 𝒩(0, I)</li>
+          <li>This is easy: we define it analytically</li>
+        </ul>
+        <div style="margin-top:1.5rem">
+          <div class="label">Reverse process (what we learn)</div>
+          <ul style="margin-top:.8rem">
+            <li>Start from pure noise x<sub>T</sub></li>
+            <li>Predict and remove the noise, step by step</li>
+            <li>End with a clean image x<sub>0</sub></li>
+            <li>A neural network learns this denoising</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="diagram"><span class="hi">x<sub>0</sub></span> <span class="dim">———</span> add noise <span class="dim">———►</span> <span class="hi">x<sub>1</sub></span> <span class="dim">→</span> ... <span class="dim">→</span> <span class="hi2">x<sub>T</sub></span>
+<span class="dim">(clean)                                     (noise)</span>
+
+
+<span class="hi2">x<sub>T</sub></span> <span class="dim">———</span> denoise <span class="dim">————►</span> <span class="hi2">x<sub>T−1</sub></span> <span class="dim">→</span> ... <span class="dim">→</span> <span class="hi">x<sub>0</sub></span>
+<span class="dim">(noise)   ε<sub>θ</sub>(x<sub>t</sub>, t)                         (clean)</span>
+
+
+<span class="dim">Forward:  q(x<sub>t</sub> | x<sub>t−1</sub>) = 𝒩(√α<sub>t</sub> x<sub>t−1</sub>, β<sub>t</sub> I)</span>
+<span class="dim">Reverse:  p<sub>θ</sub>(x<sub>t−1</sub> | x<sub>t</sub>)  ←  learned</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 7 — The key insight
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-idx="7">
+  <div class="slide-header">
+    <span class="session-tag">Session 1 · Forward</span>
+    <span class="timing">0:30</span>
+  </div>
+  <div class="slide-title">The closed-form <span class="hl">jump</span></div>
+  <div class="slide-body">
+    <p>Applying the forward step 1000 times is slow. But because Gaussians compose, we can jump from x<sub>0</sub> directly to any x<sub>t</sub>:</p>
+
+    <div class="formula-centered" style="margin:.5rem 0">
+      x<sub>t</sub> = √<span class="rad s">ᾱ<sub>t</sub></span> · x<sub>0</sub>  +  √<span class="rad s">1 − ᾱ<sub>t</sub></span> · ε
+      <span class="dim">ε ~ 𝒩(0, I) &nbsp;&nbsp;&nbsp; ᾱ<sub>t</sub> = ∏<sub>s≤t</sub> α<sub>s</sub> &nbsp; (cumulative product)</span>
+    </div>
+
+    <div class="two-col" style="margin-top:.5rem">
+      <div>
+        <div class="label">Why this matters for training</div>
+        <ul style="margin-top:.6rem">
+          <li>Sample any t uniformly during training</li>
+          <li>Compute x<sub>t</sub> in one operation — no loop</li>
+          <li>Training scales to T=1000 without T× slowdown</li>
+        </ul>
+      </div>
+      <div>
+        <div class="label">What ᾱ<sub>t</sub> encodes</div>
+        <ul style="margin-top:.6rem">
+          <li>At t=0: ᾱ<sub>t</sub> ≈ 1 → almost pure signal</li>
+          <li>At t=T: ᾱ<sub>t</sub> ≈ 0 → almost pure noise</li>
+          <li>The schedule shapes how fast it decays</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 8 — Noise schedules
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-idx="8">
+  <div class="slide-header">
+    <span class="session-tag">Session 1 · Forward</span>
+    <span class="timing">0:35</span>
+  </div>
+  <div class="slide-title">Noise <span class="hl">schedules</span></div>
+  <div class="slide-body">
+    <div class="two-col">
+      <div class="card">
+        <div class="card-head">Linear (Ho et al. 2020)</div>
+        <div style="font-size:.88rem;color:var(--muted);margin-bottom:.8rem">Specify β<sub>t</sub> directly. Linearly spaced from β<sub>start</sub> to β<sub>end</sub>.</div>
+        <div class="formula-block" style="font-size:.82rem">
+          betas = <span class="m">linspace</span>(β<sub>start</sub>, β<sub>end</sub>, T)<br>
+          alphas = <span class="s">1 − betas</span><br>
+          <span class="m">ᾱ<sub>t</sub> = cumprod(alphas)</span>
+        </div>
+        <div style="font-size:.8rem;color:var(--muted);margin-top:.8rem">⚠ degrades at small T; β must scale with T.</div>
+      </div>
+      <div class="card">
+        <div class="card-head">Cosine (Nichol &amp; Dhariwal 2021)</div>
+        <div style="font-size:.88rem;color:var(--muted);margin-bottom:.8rem">Specify ᾱ<sub>t</sub> via cosine. Derive β<sub>t</sub> from consecutive ratios.</div>
+        <div class="formula-block" style="font-size:.82rem">
+          <span class="m">ᾱ<sub>t</sub> = cos<sup>2</sup></span><span class="s">((t/T + s)/(1+s) · π/2)</span><br>
+          betas = <span class="s">1 − ᾱ<sub>t</sub> / ᾱ<sub>t−1</sub></span><br>
+          <span class="m">betas = clip(betas, 0, 0.999)</span>
+        </div>
+        <div style="font-size:.8rem;color:var(--muted);margin-top:.8rem">✓ T-invariant. <code>s=0.008</code> prevents β<sub>1</sub> ≈ 0.</div>
+      </div>
+    </div>
+    <p style="font-size:.9rem;color:var(--muted)">We use the <strong style="color:var(--accent)">cosine schedule</strong> throughout — it trains more stably and is T-invariant.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 9 — Hands-on NB02
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide hot" data-idx="9">
+  <div class="slide-header">
+    <span class="session-tag hot">Hands-on · NB02</span>
+    <span class="timing">0:40</span>
+  </div>
+  <div class="slide-title">Forward process <span class="hl">exercises</span></div>
+  <div class="slide-body">
+    <div class="exercise-list">
+      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">linear_schedule<span class="arg">(T)</span></span><span style="color:var(--muted);font-size:.88rem">— betas, alphas, alphas_bar</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">cosine_schedule<span class="arg">(T, s)</span></span><span style="color:var(--muted);font-size:.88rem">— design ᾱ via cosine, derive betas</span><span class="time-badge">10 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">q_sample<span class="arg">(x0, t, noise, alphas_bar)</span></span><span style="color:var(--muted);font-size:.88rem">— closed-form forward jump</span><span class="time-badge">5 min</span></div>
+    </div>
+    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:.85rem;font-family:var(--mono)">open notebooks/02_forward_process.ipynb</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 10 — The reverse problem
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-idx="10">
+  <div class="slide-header">
+    <span class="session-tag">Session 1 · Reverse</span>
+    <span class="timing">1:00</span>
+  </div>
+  <div class="slide-title">The <span class="hl">reverse</span> problem</div>
+  <div class="slide-body">
+    <div class="two-col">
+      <div>
+        <ul>
+          <li>q(x<sub>t−1</sub> | x<sub>t</sub>) is intractable — we don't know the data distribution</li>
+          <li>q(x<sub>t−1</sub> | x<sub>t</sub>, x<sub>0</sub>) <em>is</em> Gaussian — conditioning on x<sub>0</sub> makes it tractable</li>
+          <li>So: train a network to estimate x<sub>0</sub> (or equivalently ε) — then use the tractable posterior</li>
+        </ul>
+        <div style="margin-top:1.2rem">
+          <div class="label">Training objective (DDPM simplified)</div>
+          <div class="formula-centered" style="margin-top:.6rem;font-size:1rem">
+            ℒ = 𝔼<sub>t,x<sub>0</sub>,ε</sub>[ ‖ ε − ε<sub>θ</sub>(x<sub>t</sub>, t) ‖<sup>2</sup> ]
+            <span class="dim">plain MSE between true noise and predicted noise</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="label">Why predict ε instead of x<sub>0</sub>?</div>
+        <ul style="margin-top:.6rem">
+          <li>ε prediction is scale-invariant — target is always unit Gaussian</li>
+          <li>x<sub>0</sub> prediction is blurrier at high noise levels</li>
+          <li>Both are equivalent — ε and x<sub>0</sub> are related by the closed-form</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 11 — Time embeddings
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-idx="11">
+  <div class="slide-header">
+    <span class="session-tag">Session 1 · Reverse</span>
+    <span class="timing">1:05</span>
+  </div>
+  <div class="slide-title">Time <span class="hl">embeddings</span></div>
+  <div class="slide-body">
+    <p>The denoiser must know <em>which</em> timestep it's at — at t≈T the input is near-pure noise; at t≈1 it's almost clean. Passing a raw integer works poorly.</p>
+    <div class="formula-block" style="margin:.8rem 0">
+      emb(t)<sub class="s">2i</sub>   = sin<span class="m">( t / 10000<sup>(i / (d/2−1))</sup> )</span><br>
+      emb(t)<sub class="s">2i+1</sub> = cos<span class="m">( t / 10000<sup>(i / (d/2−1))</sup> )</span>
+    </div>
+    <div class="two-col">
+      <div>
+        <div class="label">In JAX</div>
+        <div class="formula-block" style="font-size:.82rem;margin-top:.5rem">
+          half = dim // 2<br>
+          freqs = <span class="s">exp</span>(<span class="m">−log(10000)</span> · arange(half) / (half−1))<br>
+          args  = <span class="m">t · freqs</span><br>
+          return <span class="s">concat</span>([sin(args), cos(args)])
+        </div>
+      </div>
+      <div>
+        <ul>
+          <li>Same formula as transformer positional encoding</li>
+          <li>Each timestep gets a unique, smooth fingerprint</li>
+          <li>Then projected: FC(256) → Tanh</li>
+          <li>Added to image features before the MLP trunk</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 12 — MLP architecture
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide" data-idx="12">
+  <div class="slide-header">
+    <span class="session-tag">Session 1 · Reverse</span>
+    <span class="timing">1:10</span>
+  </div>
+  <div class="slide-title">MLP <span class="hl">denoiser</span></div>
+  <div class="slide-body">
+    <div class="diagram">  x<sub>t</sub> [32, 32, 3]         t (int)
+         │                    │
+       flatten    sinusoidal_embedding
+         │                    │
+      [3072]               [256]
+         │                    │
+         │                FC(256)
+         │                    │
+         │                  Tanh
+         │                    │
+         └────── <span class="hi">concat</span> ───────┘
+                     │
+                  <span class="hi">[3328]</span>
+                     │
+                 FC(512) → <span class="hi2">GELU</span>
+                     │
+                 FC(512) → <span class="hi2">GELU</span>
+                     │
+                 FC(3072)
+                     │
+                  reshape
+                     │
+             <span class="hi">[32, 32, 3]</span></div>
+    <p style="font-size:.85rem;color:var(--muted)">In pure JAX: params are a plain dict. A linear layer is <code>x @ W + b</code>. No framework needed.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 13 — Hands-on NB03
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide hot" data-idx="13">
+  <div class="slide-header">
+    <span class="session-tag hot">Hands-on · NB03</span>
+    <span class="timing">1:15</span>
+  </div>
+  <div class="slide-title">Reverse process <span class="hl">exercises</span></div>
+  <div class="slide-body">
+    <div class="exercise-list">
+      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">sinusoidal_embedding<span class="arg">(t, dim)</span></span><span style="color:var(--muted);font-size:.88rem">— log-spaced freqs → sin/cos concat</span><span class="time-badge">8 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">predict_noise<span class="arg">(params, xt, t)</span></span><span style="color:var(--muted);font-size:.88rem">— full MLP forward pass</span><span class="time-badge">10 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">train_step<span class="arg">(params, opt_state, ...)</span></span><span style="color:var(--muted);font-size:.88rem">— vmap q_sample · value_and_grad · optax update</span><span class="time-badge">12 min</span></div>
+    </div>
+    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:.85rem;font-family:var(--mono)">open notebooks/03_reverse_process.ipynb</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SESSION 2 DIVIDER
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide session session-divider s2" data-idx="14">
+  <div class="session-num">02</div>
+  <div class="session-label">Sampling, Guidance &amp; Scale</div>
+  <div class="session-sublabel">DDPM · DDIM · CFG · DiT · Flax NNX</div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 15 — Recap
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide s2-color" data-idx="15">
+  <div class="slide-header">
+    <span class="session-tag s2">Session 2</span>
+    <span class="timing">0:02</span>
+  </div>
+  <div class="slide-title">Where we <span class="hl2">left off</span></div>
+  <div class="slide-body">
+    <div class="three-col">
+      <div class="card"><div class="card-head">Cosine schedule</div><div style="font-size:.85rem;color:var(--muted);line-height:1.6">ᾱ<sub>t</sub> follows a cosine curve. Gives stable training, T-invariant.</div></div>
+      <div class="card"><div class="card-head">q_sample</div><div style="font-size:.85rem;color:var(--muted);line-height:1.6">Jump from x<sub>0</sub> to any x<sub>t</sub> in one step. Essential for training.</div></div>
+      <div class="card"><div class="card-head">Trained MLP ε<sub>θ</sub></div><div style="font-size:.85rem;color:var(--muted);line-height:1.6">Predicts noise in a noisy image. Trained with simple MSE.</div></div>
+    </div>
+    <div style="margin-top:1rem">
+      <div class="label">What we still need</div>
+      <ul style="margin-top:.7rem">
+        <li>A <strong>sampling algorithm</strong> to go from x<sub>T</sub> → x<sub>0</sub> using ε<sub>θ</sub></li>
+        <li>A way to <strong>condition on class labels</strong> during generation</li>
+        <li>A scalable <strong>architecture</strong> that replaces the MLP</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 16 — DDPM reverse step
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide s2-color" data-idx="16">
+  <div class="slide-header">
+    <span class="session-tag s2">Session 2 · NB04</span>
+    <span class="timing">0:07</span>
+  </div>
+  <div class="slide-title">The DDPM <span class="hl2">reverse step</span></div>
+  <div class="slide-body">
+    <!-- Posterior mean -->
+    <div class="formula-centered" style="border-left-color:var(--amber)">
+      μ<sub>θ</sub>(x<sub>t</sub>, t) =
+      <span class="frac s">
+        <span class="num">1</span>
+        <span class="den">√<span class="rad">α<sub>t</sub></span></span>
+      </span>
+      ·
+      <span style="color:var(--text)">
+        &#x28; x<sub>t</sub> −
+        <span class="frac">
+          <span class="num">β<sub>t</sub></span>
+          <span class="den">√<span class="rad">1 − ᾱ<sub>t</sub></span></span>
+        </span>
+        · ε<sub>θ</sub> &#x29;
+      </span>
+      <span class="dim">posterior mean — substitute ε̂ for the unknown x<sub>0</sub></span>
+    </div>
+
+    <!-- Sampling step -->
+    <div class="formula-centered" style="border-left-color:var(--amber);margin-top:.5rem">
+      x<sub>t−1</sub> = μ<sub>θ</sub>  +  <span class="s">√<span class="rad">β̃<sub>t</sub></span></span> · z
+      &nbsp;&nbsp;
+      <span style="font-size:.82em;color:var(--muted)">z ~ 𝒩(0, I) &nbsp; (z=0 at t=0)</span>
+      <span class="dim">
+        β̃<sub>t</sub> =
+        <span class="frac" style="font-size:.88em">
+          <span class="num">1 − ᾱ<sub>t−1</sub></span>
+          <span class="den">1 − ᾱ<sub>t</sub></span>
+        </span>
+        · β<sub>t</sub>
+      </span>
+    </div>
+
+    <div class="two-col" style="margin-top:.5rem">
+      <ul>
+        <li>Use ε<sub>θ</sub> to estimate x<sub>0</sub>, then take one small step toward it</li>
+        <li>Add fresh noise to stay on the learned distribution</li>
+      </ul>
+      <ul>
+        <li>1000 steps — slow but accurate</li>
+        <li>The added noise prevents error accumulation</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 17 — DDIM
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide s2-color" data-idx="17">
+  <div class="slide-header">
+    <span class="session-tag s2">Session 2 · NB04</span>
+    <span class="timing">0:14</span>
+  </div>
+  <div class="slide-title">DDIM: skip the <span class="hl2">steps</span></div>
+  <div class="slide-body">
+    <div class="two-col">
+      <div>
+        <div class="label">Key idea</div>
+        <ul style="margin-top:.6rem">
+          <li>DDPM adds noise at each step — Markovian and slow</li>
+          <li>DDIM removes the stochastic term — becomes deterministic</li>
+          <li>Jump from t<sub>from</sub> → t<sub>to</sub> directly, skipping steps</li>
+        </ul>
+        <div class="formula-block" style="margin-top:1rem;font-size:.82rem">
+          x̂<sub>0</sub> =
+          <span class="frac m" style="vertical-align:middle">
+            <span class="num">x<sub>from</sub> − √<span class="rad">1−ᾱ<sub>from</sub></span> · ε</span>
+            <span class="den">√<span class="rad">ᾱ<sub>from</sub></span></span>
+          </span><br><br>
+          x<sub>to</sub> = <span class="s">√<span class="rad">ᾱ<sub>to</sub></span></span> · x̂<sub>0</sub>  +  <span class="s">√<span class="rad">1−ᾱ<sub>to</sub></span></span> · ε
+        </div>
+      </div>
+      <div>
+        <div class="label">In practice</div>
+        <ul style="margin-top:.6rem">
+          <li>Same trained model ε<sub>θ</sub> — no retraining</li>
+          <li>50 steps gives comparable quality to 1000</li>
+          <li>Deterministic: same seed → same image</li>
+        </ul>
+        <div class="card" style="margin-top:1rem">
+          <div class="card-head a2">Speedup</div>
+          <div style="font-size:.88rem;color:var(--muted)">DDPM: 1000 model calls<br>DDIM: 50 model calls → <strong style="color:var(--amber)">20× faster</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 18 — Hands-on NB04
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide hot" data-idx="18">
+  <div class="slide-header">
+    <span class="session-tag hot">Hands-on · NB04</span>
+    <span class="timing">0:20</span>
+  </div>
+  <div class="slide-title">Sampling <span class="hl">exercises</span></div>
+  <div class="slide-body">
+    <div class="exercise-list">
+      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">ddpm_step<span class="arg">(xt, t, eps_pred, schedule, key)</span></span><span style="color:var(--muted);font-size:.88rem">— posterior mean + stochastic noise</span><span class="time-badge">8 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">ddpm_sample<span class="arg">(params, schedule, key)</span></span><span style="color:var(--muted);font-size:.88rem">— full 1000-step reverse chain</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">ddim_step<span class="arg">(xt, t_from, t_to, eps_pred, schedule)</span></span><span style="color:var(--muted);font-size:.88rem">— deterministic direct jump</span><span class="time-badge">7 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">4</span><span class="exercise-fn">ddim_sample<span class="arg">(params, schedule, key, steps=50)</span></span><span style="color:var(--muted);font-size:.88rem">— subsampled DDIM loop</span><span class="time-badge">5 min</span></div>
+    </div>
+    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:.85rem;font-family:var(--mono)">open notebooks/04_sampling.ipynb</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 19 — Classifier-Free Guidance
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide s2-color" data-idx="19">
+  <div class="slide-header">
+    <span class="session-tag s2">Session 2 · NB05</span>
+    <span class="timing">0:40</span>
+  </div>
+  <div class="slide-title">Classifier-Free <span class="hl2">Guidance</span></div>
+  <div class="slide-body">
+    <div class="two-col">
+      <div>
+        <div class="label">The idea</div>
+        <ul style="margin-top:.7rem">
+          <li>Add a class embedding to the time embedding</li>
+          <li>During training, randomly replace labels with a <em>null token</em> (p=10%)</li>
+          <li>The model learns both conditional and unconditional denoising</li>
+        </ul>
+        <div style="margin-top:1.2rem">
+          <div class="label">At sampling time</div>
+          <div class="formula-centered" style="margin-top:.6rem;font-size:1rem;border-left-color:var(--amber)">
+            ε<sub>CFG</sub> = ε<sub>uncond</sub>  +  <span class="s">w</span> · (ε<sub>cond</sub> − ε<sub>uncond</sub>)
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="label">Guidance scale w</div>
+        <ul style="margin-top:.7rem">
+          <li>w = 1: pure conditional — diverse but less sharp</li>
+          <li>w = 3–5: good quality/diversity trade-off</li>
+          <li>w = 10+: very sharp class signal, less variety</li>
+        </ul>
+        <div class="card" style="margin-top:1rem">
+          <div class="card-head a2">Two forward passes per step</div>
+          <div style="font-size:.85rem;color:var(--muted)">One conditional (with label), one unconditional (with null). Blend by w.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 20 — Hands-on NB05
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide hot" data-idx="20">
+  <div class="slide-header">
+    <span class="session-tag hot">Hands-on · NB05</span>
+    <span class="timing">0:50</span>
+  </div>
+  <div class="slide-title">CFG <span class="hl">exercises</span></div>
+  <div class="slide-body">
+    <div class="exercise-list">
+      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">init_params<span class="arg">(..., n_classes=11)</span></span><span style="color:var(--muted);font-size:.88rem">— add class_emb table [11, d_time]</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">predict_noise<span class="arg">(params, xt, t, c)</span></span><span style="color:var(--muted);font-size:.88rem">— add class_emb[c] to t_emb</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">train_step<span class="arg">(..., labels_batch)</span></span><span style="color:var(--muted);font-size:.88rem">— Bernoulli dropout mask → NULL_CLASS</span><span class="time-badge">8 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">4</span><span class="exercise-fn">ddim_sample_cfg<span class="arg">(params, c, w)</span></span><span style="color:var(--muted);font-size:.88rem">— DDIM loop with cfg_noise_estimate</span><span class="time-badge">7 min</span></div>
+    </div>
+    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:.85rem;font-family:var(--mono)">open notebooks/05_cfg.ipynb</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 21 — MLP → DiT
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide s2-color" data-idx="21">
+  <div class="slide-header">
+    <span class="session-tag s2">Session 2 · NB06</span>
+    <span class="timing">1:08</span>
+  </div>
+  <div class="slide-title">MLP → <span class="hl2">Diffusion Transformer</span></div>
+  <div class="slide-body">
+    <div class="two-col">
+      <div>
+        <div class="label">Why the MLP doesn't scale</div>
+        <ul style="margin-top:.7rem">
+          <li>Flattens spatial structure — no locality or equivariance</li>
+          <li>Parameters grow quadratically with resolution</li>
+          <li>No attention — can't model long-range dependencies</li>
+        </ul>
+      </div>
+      <div>
+        <div class="label">DiT (Peebles &amp; Xie 2022)</div>
+        <ul style="margin-top:.7rem">
+          <li>Split image into patches → treat as a token sequence</li>
+          <li>Transformer processes patches with self-attention</li>
+          <li>Conditioning via Adaptive Layer Norm — not concatenation</li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:1rem">
+      <div class="label">What changes</div>
+      <ul>
+        <li>Model: pure-JAX dict → <strong>Flax NNX</strong> module class</li>
+        <li>Training: <code>jax.value_and_grad</code> → <code>nnx.value_and_grad</code> + <code>nnx.Optimizer</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 22 — Patches & AdaLN
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide s2-color" data-idx="22">
+  <div class="slide-header">
+    <span class="session-tag s2">Session 2 · NB06</span>
+    <span class="timing">1:14</span>
+  </div>
+  <div class="slide-title">Patches &amp; <span class="hl2">AdaLN</span></div>
+  <div class="slide-body">
+    <div class="two-col">
+      <div>
+        <div class="label">Patch embedding</div>
+        <div class="diagram" style="margin-top:.6rem">32×32×3  →  <span class="hi">64 patches</span>  of  4×4×3=48
+each patch  →  Linear(48, 256)  →  <span class="hi">[64, 256]</span>
++ learned positional embedding        <span class="hi2">[64, 256]</span></div>
+      </div>
+      <div>
+        <div class="label">Adaptive Layer Norm</div>
+        <div class="diagram" style="margin-top:.6rem">cond <span class="dim">[B,d]</span>  →  Linear(d→4d)
+<span class="dim">  ↓</span>
+γ<sub>1</sub>, β<sub>1</sub>, γ<sub>2</sub>, β<sub>2</sub>  (shift &amp; scale)
+
+x  →  LayerNorm  →  <span class="hi">(1+γ<sub>1</sub>)·x + β<sub>1</sub></span>
+   →  SelfAttention  →  + x
+
+x  →  LayerNorm  →  <span class="hi">(1+γ<sub>2</sub>)·x + β<sub>2</sub></span>
+   →  MLP  →  + x</div>
+      </div>
+    </div>
+    <p style="font-size:.88rem;color:var(--muted)">cond = TimestepEmbedder(t) + class_embed[c] — both time and class condition every block.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 23 — Hands-on NB06
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide hot" data-idx="23">
+  <div class="slide-header">
+    <span class="session-tag hot">Hands-on · NB06</span>
+    <span class="timing">1:20</span>
+  </div>
+  <div class="slide-title">DiT <span class="hl">exercises</span></div>
+  <div class="slide-body">
+    <div class="exercise-list">
+      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">TimestepEmbedder<span class="arg">.__call__(t)</span></span><span style="color:var(--muted);font-size:.88rem">— vmap sinusoidal_embedding · Linear · Tanh</span><span class="time-badge">6 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">PatchEmbed<span class="arg">.__call__(x)</span></span><span style="color:var(--muted);font-size:.88rem">— reshape → transpose → flatten → proj</span><span class="time-badge">6 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">AdaLNBlock<span class="arg">.__call__(x, cond)</span></span><span style="color:var(--muted);font-size:.88rem">— split adaLN output · attn + mlp residuals</span><span class="time-badge">8 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">4</span><span class="exercise-fn">DiT<span class="arg">.__call__(xt, t, c)</span></span><span style="color:var(--muted);font-size:.88rem">— embed → condition → blocks → unembed</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">5</span><span class="exercise-fn">train_step<span class="arg">(model, optimizer, ...)</span></span><span style="color:var(--muted);font-size:.88rem">— nnx.value_and_grad · optimizer.update</span><span class="time-badge">5 min</span></div>
+    </div>
+    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:.85rem;font-family:var(--mono)">open notebooks/06_dit.ipynb</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 24 — Where this leads
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide s2-color" data-idx="24">
+  <div class="slide-header">
+    <span class="session-tag s2">Wrap-up</span>
+    <span class="timing">1:45</span>
+  </div>
+  <div class="slide-title">Where <span class="hl2">this leads</span></div>
+  <div class="slide-body">
+    <div class="three-col">
+      <div class="card"><div class="card-head">Text-to-image</div><div style="font-size:.85rem;color:var(--muted);line-height:1.65">Swap class_embed for a text encoder (CLIP, T5). Cross-attention or AdaLN on text tokens. Same training loop.</div></div>
+      <div class="card"><div class="card-head">Flow matching</div><div style="font-size:.85rem;color:var(--muted);line-height:1.65">Replace the noise schedule with a straight-line interpolation. Fewer steps, faster convergence. FLUX uses this.</div></div>
+      <div class="card"><div class="card-head">Scale</div><div style="font-size:.85rem;color:var(--muted);line-height:1.65">Larger DiT (depth, width), larger dataset, longer training. The architecture you built today is the core.</div></div>
+    </div>
+    <div style="margin-top:1.5rem;padding:1.2rem 1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:6px">
+      <div class="label">You built</div>
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:.7rem">
+        <span class="pill nb">cosine schedule</span>
+        <span class="pill nb">q_sample</span>
+        <span class="pill nb">sinusoidal_embedding</span>
+        <span class="pill nb">train_step</span>
+        <span class="pill nb a2">ddpm_step</span>
+        <span class="pill nb a2">ddim_step</span>
+        <span class="pill nb a2">cfg_noise_estimate</span>
+        <span class="pill nb a2">AdaLNBlock</span>
+        <span class="pill nb a2">DiT</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 25 — Thank you
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide title-slide" data-idx="25">
+  <div class="big-title">
+    <span class="word1" style="font-size:clamp(2.5rem,6vw,5.5rem)">thanks.</span>
+    <span class="word2" style="font-size:clamp(2rem,4vw,3.5rem)">let it rip.</span>
+    <span class="subtitle">github.com/maigimenez/let-it-rip</span>
+  </div>
+  <div class="meta-row">
+    <span>@maigimenez</span>
+    <span>·</span>
+    <span class="accent">Staff Research Engineer · Google DeepMind</span>
+  </div>
+</div>
+
+</div><!-- /#deck -->
+
+<!-- ── progress + nav ───────────────────────────────────────────────── -->
+<div id="progress"></div>
+<div id="nav">
+  <button class="nav-btn" id="prev-btn" aria-label="Previous slide">←</button>
+  <span id="counter">1 / 25</span>
+  <button class="nav-btn" id="next-btn" aria-label="Next slide">→</button>
+  <button id="theme-btn" aria-label="Toggle theme">◐</button>
+</div>
+
+<script>
+const slides = Array.from(document.querySelectorAll('.slide'));
+const total  = slides.length;
+let cur = 0;
+
+const counter  = document.getElementById('counter');
+const progress = document.getElementById('progress');
+
+function show(n) {
+  slides[cur].classList.remove('active');
+  cur = Math.max(0, Math.min(n, total - 1));
+  slides[cur].classList.add('active');
+  counter.textContent = `${cur + 1} / ${total}`;
+  progress.style.width = `${((cur + 1) / total) * 100}%`;
+}
+
+document.getElementById('prev-btn').addEventListener('click', () => show(cur - 1));
+document.getElementById('next-btn').addEventListener('click', () => show(cur + 1));
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); show(cur + 1); }
+  if (e.key === 'ArrowLeft')                    { e.preventDefault(); show(cur - 1); }
+  if (e.key === 'Home')                          { e.preventDefault(); show(0); }
+  if (e.key === 'End')                           { e.preventDefault(); show(total - 1); }
+});
+
+let tx = null;
+document.addEventListener('touchstart', e => { tx = e.touches[0].clientX; });
+document.addEventListener('touchend',   e => {
+  if (tx === null) return;
+  const dx = e.changedTouches[0].clientX - tx;
+  if (Math.abs(dx) > 40) show(dx < 0 ? cur + 1 : cur - 1);
+  tx = null;
+});
+
+const root = document.documentElement;
+const btn  = document.getElementById('theme-btn');
+let dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+function applyTheme() { root.setAttribute('data-theme', dark ? 'dark' : 'light'); }
+applyTheme();
+btn.addEventListener('click', () => { dark = !dark; applyTheme(); });
+
+const canvas = document.getElementById('noise');
+function drawNoise() {
+  if (!canvas) return;
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const img = ctx.createImageData(canvas.width, canvas.height);
+  for (let i = 0; i < img.data.length; i += 4) {
+    const v = Math.random() * 255 | 0;
+    img.data[i] = img.data[i+1] = img.data[i+2] = v;
+    img.data[i+3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+}
+drawNoise();
+window.addEventListener('resize', drawNoise);
+
+show(0);
+</script>
