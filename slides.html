@@ -119,7 +119,7 @@ sup { top: -.5em; }
 .slide-body {
   flex: 1; display: flex; flex-direction: column;
   justify-content: flex-start; gap: 1.1rem;
-  font-size: clamp(.95rem,1.6vw,1.15rem); line-height: 1.65;
+  font-size: clamp(1.1rem,1.6vw,1.3rem); line-height: 1.65;
 }
 
 ul { list-style: none; display: flex; flex-direction: column; gap: .6rem; }
@@ -224,6 +224,17 @@ code, .inline-code {
 .nb-topic { color: var(--text); }
 .nb-detail { color: var(--muted); font-size: .88em; }
 .nb-dur { font-family: var(--mono); font-size: .68rem; color: var(--muted); text-align: right; white-space: nowrap; }
+
+/* ── comparison table ────────────────────────────────────────────────── */
+.compare-table { width: 100%; border-collapse: collapse; font-size: 1.05rem; }
+.compare-table th { font-family: var(--mono); font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; text-align: left; padding: .3rem .9rem .6rem; }
+.compare-table th:first-child { visibility: hidden; }
+.compare-table th:nth-child(2) { color: var(--accent); }
+.compare-table th:nth-child(3) { color: var(--amber); }
+.compare-table td { padding: .55rem .9rem; border-top: 1px solid var(--border); color: var(--text); line-height: 1.5; vertical-align: top; }
+.compare-table tr:first-child td { border-top: 2px solid var(--border); }
+.compare-table td:first-child { font-family: var(--mono); font-size: .82rem; font-weight: 700; color: var(--muted); white-space: nowrap; background: var(--surface); border-radius: 4px 0 0 4px; }
+.compare-table td:last-child { border-radius: 0 4px 4px 0; }
 </style>
 
 <canvas class="noise-canvas" id="noise"></canvas>
@@ -273,7 +284,7 @@ code, .inline-code {
       <div style="display:flex;flex-direction:column;gap:1rem">
         <div class="card">
           <div class="card-head">Find me</div>
-          <div style="font-size:.88rem;color:var(--muted);line-height:1.8;font-family:var(--mono)">
+          <div style="font-size:1.1rem;color:var(--muted);line-height:1.8;font-family:var(--mono)">
             github.com/maigimenez<br>
             @maidotgimenez<br>
             maigimenez@google.com
@@ -281,7 +292,7 @@ code, .inline-code {
         </div>
         <div class="card">
           <div class="card-head a2">This tutorial</div>
-          <div style="font-size:.88rem;color:var(--muted);line-height:1.7">Built entirely in JAX: every exercise is code you write and run yourself, not a slide to stare at.</div>
+          <div style="font-size:1.1rem;color:var(--muted);line-height:1.7">Built entirely in JAX: every exercise is code you write and run yourself, not a slide to stare at.</div>
         </div>
       </div>
     </div>
@@ -308,7 +319,7 @@ code, .inline-code {
         loading="lazy"
       ></iframe>
     </div>
-    <p style="font-size:.85rem;color:var(--muted);text-align:center">Introducing Gemini Omni: some of the generative modelling work happening at DeepMind right now.</p>
+    <p style="font-size:1.1rem;color:var(--muted);text-align:center">Introducing Gemini Omni: some of the generative modelling work happening at DeepMind right now.</p>
   </div>
 </div>
 
@@ -325,11 +336,11 @@ code, .inline-code {
     <div class="two-col">
       <div class="card">
         <div class="card-head">Discriminative</div>
-        <div style="font-size:.88rem;color:var(--muted);line-height:1.7">Model the posterior p(y | x): the probability of a label y given an example x. Great for classification, useless for creating new x.</div>
+        <div style="font-size:1.1rem;color:var(--muted);line-height:1.7">Model the posterior p(y | x): the probability of a label y given an example x. Great for classification, useless for creating new x.</div>
       </div>
       <div class="card">
         <div class="card-head a2">Generative</div>
-        <div style="font-size:.88rem;color:var(--muted);line-height:1.7">Model the likelihood p(x | y) and the marginal p(x): the probability of the data itself. This is what lets you <em>sample</em> new examples.</div>
+        <div style="font-size:1.1rem;color:var(--muted);line-height:1.7">Model the likelihood p(x | y) and the marginal p(x): the probability of the data itself. This is what lets you <em>sample</em> new examples.</div>
       </div>
     </div>
     <div style="margin-top:1.2rem">
@@ -368,11 +379,11 @@ code, .inline-code {
       <div style="display:flex;flex-direction:column;gap:1rem">
         <div class="card">
           <div class="card-head">6 notebooks</div>
-          <div style="font-size:.88rem;color:var(--muted);line-height:1.7">JAX basics → forward process → denoiser → sampling → CFG → DiT</div>
+          <div style="font-size:1.1rem;color:var(--muted);line-height:1.7">JAX basics → forward process → denoiser → sampling → CFG → DiT</div>
         </div>
         <div class="card">
           <div class="card-head a2">What you need</div>
-          <div style="font-size:.88rem;color:var(--muted);line-height:1.7">Python + JAX basics • A GPU (Colab free tier is fine) • Curiosity</div>
+          <div style="font-size:1.1rem;color:var(--muted);line-height:1.7">Python + JAX basics • A GPU (Colab free tier is fine) • Curiosity</div>
         </div>
       </div>
     </div>
@@ -422,7 +433,7 @@ code, .inline-code {
   <div class="slide-body">
     <div class="two-col">
       <div>
-        <p style="font-size:.9rem;color:var(--muted)">A differentiable NumPy-like library that runs on accelerators. Python code is traced into an intermediate representation that enables domain-specific compilation. Designed to be functional, so it can <em>transform</em> your code, not just run it.</p>
+        <p style="font-size:1.1rem;color:var(--muted)">A differentiable NumPy-like library that runs on accelerators. Python code is traced into an intermediate representation that enables domain-specific compilation. Designed to be functional, so it can <em>transform</em> your code, not just run it.</p>
         <div class="label" style="margin-top:1.2rem">Common transformations</div>
         <ul style="margin-top:.7rem">
           <li><code>grad()</code>: computes the gradient of a numerical function</li>
@@ -430,16 +441,16 @@ code, .inline-code {
           <li><code>vmap()</code>: automatic vectorisation / batching</li>
           <li><code>pmap()</code>: automatic parallelisation across devices</li>
         </ul>
-        <p style="font-size:.82rem;color:var(--muted);margin-top:.8rem">Next four slides: one transformation each, in depth.</p>
+        <p style="font-size:1.1rem;color:var(--muted);margin-top:.8rem">Next four slides: one transformation each, in depth.</p>
       </div>
       <div style="display:flex;flex-direction:column;gap:1rem">
         <div class="card">
           <div class="card-head">NumPy</div>
-          <div style="font-size:.85rem;color:var(--muted);line-height:1.7">Mutable arrays · eager execution · CPU only · no built-in autodiff</div>
+          <div style="font-size:1.1rem;color:var(--muted);line-height:1.7">Mutable arrays · eager execution · CPU only · no built-in autodiff</div>
         </div>
         <div class="card">
           <div class="card-head a2">JAX</div>
-          <div style="font-size:.85rem;color:var(--muted);line-height:1.7">Immutable arrays · traced &amp; compiled (<code>jit</code>) · CPU/GPU/TPU · <code>grad</code> built in</div>
+          <div style="font-size:1.1rem;color:var(--muted);line-height:1.7">Immutable arrays · traced &amp; compiled (<code>jit</code>) · CPU/GPU/TPU · <code>grad</code> built in</div>
         </div>
         <div class="formula-block" style="font-size:.8rem">
           import jax.numpy as <span class="s">jnp</span><br>
@@ -538,7 +549,7 @@ code, .inline-code {
     <div class="two-col">
       <div class="card">
         <div class="card-head">vmap: vectorisation</div>
-        <div style="font-size:.85rem;color:var(--muted);line-height:1.7;margin-bottom:.8rem">Transforms a function to operate over a batch dimension without writing a loop. <code>in_axes</code>/<code>out_axes</code> pick which axis is the batch, per argument.</div>
+        <div style="font-size:1.1rem;color:var(--muted);line-height:1.7;margin-bottom:.8rem">Transforms a function to operate over a batch dimension without writing a loop. <code>in_axes</code>/<code>out_axes</code> pick which axis is the batch, per argument.</div>
         <div class="formula-block" style="font-size:.82rem">
           f = <span class="s">jax.vmap</span>(single_fn, in_axes=(0, None))<br>
           <span class="m">f(x_batch, shared_param)</span>
@@ -546,14 +557,14 @@ code, .inline-code {
       </div>
       <div class="card">
         <div class="card-head a2">pmap: parallelisation</div>
-        <div style="font-size:.85rem;color:var(--muted);line-height:1.7;margin-bottom:.8rem">Same idea, across devices instead of within one: replicates the function on every GPU/TPU and splits the batch across them.</div>
+        <div style="font-size:1.1rem;color:var(--muted);line-height:1.7;margin-bottom:.8rem">Same idea, across devices instead of within one: replicates the function on every GPU/TPU and splits the batch across them.</div>
         <div class="formula-block" style="font-size:.82rem">
           f = <span class="s">jax.pmap</span>(train_step)<br>
           <span class="m">f(params, x_sharded)</span>  <span class="d"># one shard per device</span>
         </div>
       </div>
     </div>
-    <p style="font-size:.85rem;color:var(--muted);margin-top:.5rem">In this tutorial: <code>vmap</code> batches <code>q_sample</code> / <code>predict_noise</code> over images. <code>pmap</code> isn't needed at Colab scale, but the exact same pattern scales training to a full TPU pod.</p>
+    <p style="font-size:1.1rem;color:var(--muted);margin-top:.5rem">In this tutorial: <code>vmap</code> batches <code>q_sample</code> / <code>predict_noise</code> over images. <code>pmap</code> isn't needed at Colab scale, but the exact same pattern scales training to a full TPU pod.</p>
   </div>
 </div>
 
@@ -605,10 +616,10 @@ code, .inline-code {
   <div class="slide-title">JAX basics <span class="hl">exercises</span></div>
   <div class="slide-body">
     <div class="exercise-list">
-      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">jit_fn<span class="arg">()</span></span><span style="color:var(--muted);font-size:.88rem">: compile a function and verify it runs faster on the second call</span><span class="time-badge">5 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">vmap_fn<span class="arg">()</span></span><span style="color:var(--muted);font-size:.88rem">: vectorise a single-sample function over a batch</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">jit_fn<span class="arg">()</span></span><span style="color:var(--muted);font-size:1.1rem">: compile a function and verify it runs faster on the second call</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">vmap_fn<span class="arg">()</span></span><span style="color:var(--muted);font-size:1.1rem">: vectorise a single-sample function over a batch</span><span class="time-badge">5 min</span></div>
     </div>
-    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:.85rem;font-family:var(--mono)">open notebooks/01_jax_basics.ipynb</div>
+    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:1.1rem;font-family:var(--mono)">open notebooks/01_jax_basics.ipynb</div>
   </div>
 </div>
 
@@ -624,7 +635,7 @@ code, .inline-code {
   <div class="slide-body">
     <div class="two-col">
       <div>
-        <p style="font-size:.9rem;color:var(--muted)">A diffusion model defines a Markov chain of steps that slowly add random noise to data, then learns to <em>reverse</em> that process to construct new samples from noise.</p>
+        <p style="font-size:1.1rem;color:var(--muted)">A diffusion model defines a Markov chain of steps that slowly add random noise to data, then learns to <em>reverse</em> that process to construct new samples from noise.</p>
         <div class="label" style="margin-top:1.2rem">Two processes</div>
         <ul style="margin-top:.7rem">
           <li>Forward process <strong>q</strong>: gradually adds noise to an image, on a fixed schedule, until it becomes pure noise</li>
@@ -669,7 +680,7 @@ code, .inline-code {
       </div>
       <div class="card">
         <div class="card-head">Nothing to learn here</div>
-        <div style="font-size:.85rem;color:var(--muted);line-height:1.7">The forward direction is a fixed formula, applied one step at a time: no network, no training. It's the reverse direction, next, that has to be learned.</div>
+        <div style="font-size:1.1rem;color:var(--muted);line-height:1.7">The forward direction is a fixed formula, applied one step at a time: no network, no training. It's the reverse direction, next, that has to be learned.</div>
       </div>
     </div>
   </div>
@@ -695,7 +706,7 @@ code, .inline-code {
       </div>
       <div class="card">
         <div class="card-head a2">The reparametrization trick</div>
-        <div style="font-size:.85rem;color:var(--muted);line-height:1.7">Instead of predicting the mean directly, reparametrize it so the network predicts the <strong>added noise</strong> ε<sub>θ</sub>(x<sub>t</sub>, t) for a given noise level t. This is exactly the term that appears in the (simplified) training loss.</div>
+        <div style="font-size:1.1rem;color:var(--muted);line-height:1.7">Instead of predicting the mean directly, reparametrize it so the network predicts the <strong>added noise</strong> ε<sub>θ</sub>(x<sub>t</sub>, t) for a given noise level t. This is exactly the term that appears in the (simplified) training loss.</div>
       </div>
     </div>
   </div>
@@ -737,7 +748,7 @@ code, .inline-code {
         </div>
       </div>
     </div>
-    <p style="font-size:.85rem;color:var(--muted);margin-top:.2rem">Same shape you'll see in the notebooks: <code>train_step</code> is Algorithm 1, <code>ddpm_sample</code> is Algorithm 2: with the schedule swapped in for α<sub>t</sub>, ᾱ<sub>t</sub>.</p>
+    <p style="font-size:1.1rem;color:var(--muted);margin-top:.2rem">Same shape you'll see in the notebooks: <code>train_step</code> is Algorithm 1, <code>ddpm_sample</code> is Algorithm 2: with the schedule swapped in for α<sub>t</sub>, ᾱ<sub>t</sub>.</p>
   </div>
 </div>
 
@@ -792,26 +803,26 @@ code, .inline-code {
     <div class="two-col">
       <div class="card">
         <div class="card-head">Linear (Ho et al. 2020)</div>
-        <div style="font-size:.88rem;color:var(--muted);margin-bottom:.8rem">Specify β<sub>t</sub> directly. Linearly spaced from β<sub>start</sub> to β<sub>end</sub>.</div>
+        <div style="font-size:1.1rem;color:var(--muted);margin-bottom:.8rem">Specify β<sub>t</sub> directly. Linearly spaced from β<sub>start</sub> to β<sub>end</sub>.</div>
         <div class="formula-block" style="font-size:.82rem">
           betas = <span class="m">linspace</span>(β<sub>start</sub>, β<sub>end</sub>, T)<br>
           alphas = <span class="s">1 − betas</span><br>
           <span class="m">ᾱ<sub>t</sub> = cumprod(alphas)</span>
         </div>
-        <div style="font-size:.8rem;color:var(--muted);margin-top:.8rem">⚠ degrades at small T; β must scale with T.</div>
+        <div style="font-size:1.1rem;color:var(--muted);margin-top:.8rem">⚠ degrades at small T; β must scale with T.</div>
       </div>
       <div class="card">
         <div class="card-head">Cosine (Nichol &amp; Dhariwal 2021)</div>
-        <div style="font-size:.88rem;color:var(--muted);margin-bottom:.8rem">Specify ᾱ<sub>t</sub> via cosine. Derive β<sub>t</sub> from consecutive ratios.</div>
+        <div style="font-size:1.1rem;color:var(--muted);margin-bottom:.8rem">Specify ᾱ<sub>t</sub> via cosine. Derive β<sub>t</sub> from consecutive ratios.</div>
         <div class="formula-block" style="font-size:.82rem">
           <span class="m">ᾱ<sub>t</sub> = cos<sup>2</sup></span><span class="s">((t/T + s)/(1+s) · π/2)</span><br>
           betas = <span class="s">1 − ᾱ<sub>t</sub> / ᾱ<sub>t−1</sub></span><br>
           <span class="m">betas = clip(betas, 0, 0.999)</span>
         </div>
-        <div style="font-size:.8rem;color:var(--muted);margin-top:.8rem">✓ T-invariant. <code>s=0.008</code> prevents β<sub>1</sub> ≈ 0.</div>
+        <div style="font-size:1.1rem;color:var(--muted);margin-top:.8rem">✓ T-invariant. <code>s=0.008</code> prevents β<sub>1</sub> ≈ 0.</div>
       </div>
     </div>
-    <p style="font-size:.9rem;color:var(--muted)">We use the <strong style="color:var(--accent)">cosine schedule</strong> throughout: it trains more stably and is T-invariant.</p>
+    <p style="font-size:1.1rem;color:var(--muted)">We use the <strong style="color:var(--accent)">cosine schedule</strong> throughout: it trains more stably and is T-invariant.</p>
   </div>
 </div>
 
@@ -826,11 +837,11 @@ code, .inline-code {
   <div class="slide-title">Forward process <span class="hl">exercises</span></div>
   <div class="slide-body">
     <div class="exercise-list">
-      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">linear_schedule<span class="arg">(T)</span></span><span style="color:var(--muted);font-size:.88rem">: betas, alphas, alphas_bar</span><span class="time-badge">5 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">cosine_schedule<span class="arg">(T, s)</span></span><span style="color:var(--muted);font-size:.88rem">: design ᾱ via cosine, derive betas</span><span class="time-badge">10 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">q_sample<span class="arg">(x0, t, noise, alphas_bar)</span></span><span style="color:var(--muted);font-size:.88rem">: closed-form forward jump</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">linear_schedule<span class="arg">(T)</span></span><span style="color:var(--muted);font-size:1.1rem">: betas, alphas, alphas_bar</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">cosine_schedule<span class="arg">(T, s)</span></span><span style="color:var(--muted);font-size:1.1rem">: design ᾱ via cosine, derive betas</span><span class="time-badge">10 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">q_sample<span class="arg">(x0, t, noise, alphas_bar)</span></span><span style="color:var(--muted);font-size:1.1rem">: closed-form forward jump</span><span class="time-badge">5 min</span></div>
     </div>
-    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:.85rem;font-family:var(--mono)">open notebooks/02_forward_process.ipynb</div>
+    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:1.1rem;font-family:var(--mono)">open notebooks/02_forward_process.ipynb</div>
   </div>
 </div>
 
@@ -941,7 +952,7 @@ code, .inline-code {
                   reshape
                      │
              <span class="hi">[32, 32, 3]</span></div>
-    <p style="font-size:.85rem;color:var(--muted)">In pure JAX: params are a plain dict. A linear layer is <code>x @ W + b</code>. No framework needed.</p>
+    <p style="font-size:1.1rem;color:var(--muted)">In pure JAX: params are a plain dict. A linear layer is <code>x @ W + b</code>. No framework needed.</p>
   </div>
 </div>
 
@@ -956,11 +967,11 @@ code, .inline-code {
   <div class="slide-title">Reverse process <span class="hl">exercises</span></div>
   <div class="slide-body">
     <div class="exercise-list">
-      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">sinusoidal_embedding<span class="arg">(t, dim)</span></span><span style="color:var(--muted);font-size:.88rem">: log-spaced freqs → sin/cos concat</span><span class="time-badge">8 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">predict_noise<span class="arg">(params, xt, t)</span></span><span style="color:var(--muted);font-size:.88rem">: full MLP forward pass</span><span class="time-badge">10 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">train_step<span class="arg">(params, opt_state, ...)</span></span><span style="color:var(--muted);font-size:.88rem">: vmap q_sample · value_and_grad · optax update</span><span class="time-badge">12 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">sinusoidal_embedding<span class="arg">(t, dim)</span></span><span style="color:var(--muted);font-size:1.1rem">: log-spaced freqs → sin/cos concat</span><span class="time-badge">8 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">predict_noise<span class="arg">(params, xt, t)</span></span><span style="color:var(--muted);font-size:1.1rem">: full MLP forward pass</span><span class="time-badge">10 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">train_step<span class="arg">(params, opt_state, ...)</span></span><span style="color:var(--muted);font-size:1.1rem">: vmap q_sample · value_and_grad · optax update</span><span class="time-badge">12 min</span></div>
     </div>
-    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:.85rem;font-family:var(--mono)">open notebooks/03_reverse_process.ipynb</div>
+    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:1.1rem;font-family:var(--mono)">open notebooks/03_reverse_process.ipynb</div>
   </div>
 </div>
 
@@ -984,9 +995,9 @@ code, .inline-code {
   <div class="slide-title">Where we <span class="hl2">left off</span></div>
   <div class="slide-body">
     <div class="three-col">
-      <div class="card"><div class="card-head">Cosine schedule</div><div style="font-size:.85rem;color:var(--muted);line-height:1.6">ᾱ<sub>t</sub> follows a cosine curve. Gives stable training, T-invariant.</div></div>
-      <div class="card"><div class="card-head">q_sample</div><div style="font-size:.85rem;color:var(--muted);line-height:1.6">Jump from x<sub>0</sub> to any x<sub>t</sub> in one step. Essential for training.</div></div>
-      <div class="card"><div class="card-head">Trained MLP ε<sub>θ</sub></div><div style="font-size:.85rem;color:var(--muted);line-height:1.6">Predicts noise in a noisy image. Trained with simple MSE.</div></div>
+      <div class="card"><div class="card-head">Cosine schedule</div><div style="font-size:1.1rem;color:var(--muted);line-height:1.6">ᾱ<sub>t</sub> follows a cosine curve. Gives stable training, T-invariant.</div></div>
+      <div class="card"><div class="card-head">q_sample</div><div style="font-size:1.1rem;color:var(--muted);line-height:1.6">Jump from x<sub>0</sub> to any x<sub>t</sub> in one step. Essential for training.</div></div>
+      <div class="card"><div class="card-head">Trained MLP ε<sub>θ</sub></div><div style="font-size:1.1rem;color:var(--muted);line-height:1.6">Predicts noise in a noisy image. Trained with simple MSE.</div></div>
     </div>
     <div style="margin-top:1rem">
       <div class="label">What we still need</div>
@@ -1092,7 +1103,7 @@ code, .inline-code {
         </ul>
         <div class="card" style="margin-top:1rem">
           <div class="card-head a2">Speedup</div>
-          <div style="font-size:.88rem;color:var(--muted)">DDPM: 1000 model calls<br>DDIM: 50 model calls → <strong style="color:var(--amber)">20× faster</strong></div>
+          <div style="font-size:1.1rem;color:var(--muted)">DDPM: 1000 model calls<br>DDIM: 50 model calls → <strong style="color:var(--amber)">20× faster</strong></div>
         </div>
       </div>
     </div>
@@ -1110,12 +1121,12 @@ code, .inline-code {
   <div class="slide-title">Sampling <span class="hl">exercises</span></div>
   <div class="slide-body">
     <div class="exercise-list">
-      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">ddpm_step<span class="arg">(xt, t, eps_pred, schedule, key)</span></span><span style="color:var(--muted);font-size:.88rem">: posterior mean + stochastic noise</span><span class="time-badge">8 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">ddpm_sample<span class="arg">(params, schedule, key)</span></span><span style="color:var(--muted);font-size:.88rem">: full 1000-step reverse chain</span><span class="time-badge">5 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">ddim_step<span class="arg">(xt, t_from, t_to, eps_pred, schedule)</span></span><span style="color:var(--muted);font-size:.88rem">: deterministic direct jump</span><span class="time-badge">7 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">4</span><span class="exercise-fn">ddim_sample<span class="arg">(params, schedule, key, steps=50)</span></span><span style="color:var(--muted);font-size:.88rem">: subsampled DDIM loop</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">ddpm_step<span class="arg">(xt, t, eps_pred, schedule, key)</span></span><span style="color:var(--muted);font-size:1.1rem">: posterior mean + stochastic noise</span><span class="time-badge">8 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">ddpm_sample<span class="arg">(params, schedule, key)</span></span><span style="color:var(--muted);font-size:1.1rem">: full 1000-step reverse chain</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">ddim_step<span class="arg">(xt, t_from, t_to, eps_pred, schedule)</span></span><span style="color:var(--muted);font-size:1.1rem">: deterministic direct jump</span><span class="time-badge">7 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">4</span><span class="exercise-fn">ddim_sample<span class="arg">(params, schedule, key, steps=50)</span></span><span style="color:var(--muted);font-size:1.1rem">: subsampled DDIM loop</span><span class="time-badge">5 min</span></div>
     </div>
-    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:.85rem;font-family:var(--mono)">open notebooks/04_sampling.ipynb</div>
+    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:1.1rem;font-family:var(--mono)">open notebooks/04_sampling.ipynb</div>
   </div>
 </div>
 
@@ -1153,7 +1164,7 @@ code, .inline-code {
         </ul>
         <div class="card" style="margin-top:1rem">
           <div class="card-head a2">Two forward passes per step</div>
-          <div style="font-size:.85rem;color:var(--muted)">One conditional (with label), one unconditional (with null). Blend by w.</div>
+          <div style="font-size:1.1rem;color:var(--muted)">One conditional (with label), one unconditional (with null). Blend by w.</div>
         </div>
       </div>
     </div>
@@ -1171,62 +1182,12 @@ code, .inline-code {
   <div class="slide-title">CFG <span class="hl">exercises</span></div>
   <div class="slide-body">
     <div class="exercise-list">
-      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">init_params<span class="arg">(..., n_classes=11)</span></span><span style="color:var(--muted);font-size:.88rem">: add class_emb table [11, d_time]</span><span class="time-badge">5 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">predict_noise<span class="arg">(params, xt, t, c)</span></span><span style="color:var(--muted);font-size:.88rem">: add class_emb[c] to t_emb</span><span class="time-badge">5 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">train_step<span class="arg">(..., labels_batch)</span></span><span style="color:var(--muted);font-size:.88rem">: Bernoulli dropout mask → NULL_CLASS</span><span class="time-badge">8 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">4</span><span class="exercise-fn">ddim_sample_cfg<span class="arg">(params, c, w)</span></span><span style="color:var(--muted);font-size:.88rem">: DDIM loop with cfg_noise_estimate</span><span class="time-badge">7 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">init_params<span class="arg">(..., n_classes=11)</span></span><span style="color:var(--muted);font-size:1.1rem">: add class_emb table [11, d_time]</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">predict_noise<span class="arg">(params, xt, t, c)</span></span><span style="color:var(--muted);font-size:1.1rem">: add class_emb[c] to t_emb</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">train_step<span class="arg">(..., labels_batch)</span></span><span style="color:var(--muted);font-size:1.1rem">: Bernoulli dropout mask → NULL_CLASS</span><span class="time-badge">8 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">4</span><span class="exercise-fn">ddim_sample_cfg<span class="arg">(params, c, w)</span></span><span style="color:var(--muted);font-size:1.1rem">: DDIM loop with cfg_noise_estimate</span><span class="time-badge">7 min</span></div>
     </div>
-    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:.85rem;font-family:var(--mono)">open notebooks/05_cfg.ipynb</div>
-  </div>
-</div>
-
-<!-- ═══════════════════════════════════════════════════════════════════
-  SLIDE 21: MLP → DiT
-═══════════════════════════════════════════════════════════════════ -->
-<div class="slide s2-color" data-idx="31">
-  <div class="slide-header">
-    <span class="session-tag s2">Session 2 · NB06</span>
-    <span class="timing">1:08</span>
-  </div>
-  <div class="slide-title">MLP → <span class="hl2">Diffusion Transformer</span></div>
-  <div class="slide-body">
-    <div class="two-col">
-      <div>
-        <div class="label">Why the MLP doesn't scale</div>
-        <ul style="margin-top:.7rem">
-          <li>Flattens spatial structure: no locality or equivariance</li>
-          <li>Parameters grow quadratically with resolution</li>
-          <li>No attention: can't model long-range dependencies</li>
-        </ul>
-      </div>
-      <div>
-        <div class="label">DiT (Peebles &amp; Xie 2022)</div>
-        <ul style="margin-top:.7rem">
-          <li>Split image into patches → treat as a token sequence</li>
-          <li>Transformer processes patches with self-attention</li>
-          <li>Conditioning via Adaptive Layer Norm: not concatenation</li>
-        </ul>
-      </div>
-    </div>
-    <div style="margin-top:.8rem">
-      <div class="label">The data flow</div>
-      <div class="diagram" style="margin-top:.5rem;font-size:clamp(.62rem,1vw,.78rem)">x<sub>t</sub> [B,H,W,C] ──► PatchEmbed ──► [B,N,d] + pos_embed
-                                      │
-t  [B]  ──► TimestepEmbedder ──► [B,d] ─┐
-                                          ├──► cond [B,d]
-c  [B]  ──► class_embed[c]   ──► [B,d] ─┘
-                                      │
-                          DEPTH × <span class="hi">AdaLNBlock</span>(x, cond)
-                                      │
-                               LayerNorm ──► PatchUnembed ──► [B,H,W,C]</div>
-    </div>
-    <div style="margin-top:.6rem">
-      <div class="label">What changes</div>
-      <ul style="margin-top:.4rem">
-        <li>Model: pure-JAX dict → <strong>Flax NNX</strong> module class</li>
-        <li>Training: <code>jax.value_and_grad</code> → <code>nnx.value_and_grad</code> + <code>nnx.Optimizer</code></li>
-      </ul>
-    </div>
+    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:1.1rem;font-family:var(--mono)">open notebooks/05_cfg.ipynb</div>
   </div>
 </div>
 
@@ -1242,7 +1203,7 @@ c  [B]  ──► class_embed[c]   ──► [B,d] ─┘
   <div class="slide-body">
     <div class="two-col">
       <div>
-        <p style="font-size:.9rem;color:var(--muted)">A high-performance neural network library built directly on top of JAX. JAX's functional paradigm requires manually managing model parameters and state: Flax simplifies building and training models while keeping every JAX transformation (<code>jit</code>, <code>grad</code>, <code>vmap</code>) available.</p>
+        <p style="font-size:1.1rem;color:var(--muted)">A high-performance neural network library built directly on top of JAX. JAX's functional paradigm requires manually managing model parameters and state: Flax simplifies building and training models while keeping every JAX transformation (<code>jit</code>, <code>grad</code>, <code>vmap</code>) available.</p>
         <div class="label" style="margin-top:1.2rem">The problem with plain dicts</div>
         <ul style="margin-top:.7rem">
           <li>Params live outside the model: you thread dicts through every function by hand</li>
@@ -1275,26 +1236,26 @@ c  [B]  ──► class_embed[c]   ──► [B,d] ─┘
     <div class="two-col">
       <div class="card">
         <div class="card-head">Built-in layers</div>
-        <div style="font-size:.85rem;color:var(--muted);line-height:1.7">Common layers ready to use: Linear, Conv, BatchNorm, LayerNorm, Attention.</div>
+        <div style="font-size:1.1rem;color:var(--muted);line-height:1.7">Common layers ready to use: Linear, Conv, BatchNorm, LayerNorm, Attention.</div>
       </div>
       <div class="card">
         <div class="card-head a2">Functional RNG</div>
-        <div style="font-size:.85rem;color:var(--muted);line-height:1.7"><code>nnx.Rngs</code> handles key-splitting for you: no manual <code>jr.split</code> bookkeeping per layer.</div>
+        <div style="font-size:1.1rem;color:var(--muted);line-height:1.7"><code>nnx.Rngs</code> handles key-splitting for you: no manual <code>jr.split</code> bookkeeping per layer.</div>
       </div>
     </div>
     <div class="two-col" style="margin-top:1rem">
       <div class="card">
         <div class="card-head">Optax integration</div>
-        <div style="font-size:.85rem;color:var(--muted);line-height:1.7">Direct integration with Optax, JAX's gradient-processing and optimization library, via <code>nnx.Optimizer</code>.</div>
+        <div style="font-size:1.1rem;color:var(--muted);line-height:1.7">Direct integration with Optax, JAX's gradient-processing and optimization library, via <code>nnx.Optimizer</code>.</div>
       </div>
       <div class="card">
         <div class="card-head a2">Distributed training</div>
-        <div style="font-size:.85rem;color:var(--muted);line-height:1.7">Utilities for sharding and replication: the same model code scales from one device to a pod.</div>
+        <div style="font-size:1.1rem;color:var(--muted);line-height:1.7">Utilities for sharding and replication: the same model code scales from one device to a pod.</div>
       </div>
     </div>
     <div class="card" style="margin-top:1rem">
       <div class="card-head a2">Trade-off</div>
-      <div style="font-size:.85rem;color:var(--muted)">More machinery than raw JAX. Worth it once the model outgrows a couple of layers: exactly the DiT you're about to build.</div>
+      <div style="font-size:1.1rem;color:var(--muted)">More machinery than raw JAX. Worth it once the model outgrows a couple of layers: exactly the DiT you're about to build.</div>
     </div>
   </div>
 </div>
@@ -1309,40 +1270,190 @@ c  [B]  ──► class_embed[c]   ──► [B,d] ─┘
   </div>
   <div class="slide-title">Flax <span class="hl2">vs.</span> PyTorch</div>
   <div class="slide-body">
-    <div class="two-col">
-      <div class="card">
-        <div class="card-head">PyTorch</div>
-        <div style="font-size:.85rem;color:var(--muted);line-height:1.7">Object-oriented and stateful · parameters live on the module and are mutated in place · autograd builds a dynamic graph on the fly · <code>torch.compile</code> is opt-in</div>
-      </div>
-      <div class="card">
-        <div class="card-head a2">Flax (NNX)</div>
-        <div style="font-size:.85rem;color:var(--muted);line-height:1.7">Functional under the hood · parameters managed as PyTrees, model logic stays pure · <code>grad</code> transforms the function itself · <code>jit</code>/<code>vmap</code>/<code>pmap</code> are native, idiomatic, and compose</div>
-      </div>
-    </div>
-    <p style="font-size:.85rem;color:var(--muted);margin-top:.8rem">Neither is strictly better. PyTorch's eager, stateful style is easier to debug line-by-line; JAX/Flax's functional style makes transformations like <code>vmap</code> and multi-device scaling fall out for free.</p>
+    <table class="compare-table">
+      <thead>
+        <tr><th></th><th>JAX/Flax</th><th>PyTorch</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Programming Paradigm</td><td>Functional</td><td>Imperative/Object-Oriented</td></tr>
+        <tr><td>Compilation</td><td>Static JIT compilation with XLA (ahead-of-time)</td><td>Dynamic graph by default, with optional <code>torch.compile</code> (just-in-time)</td></tr>
+        <tr><td>Model Parameters</td><td>Explicitly passed and returned as immutable PyTrees</td><td>Implicitly held and mutated inside <code>nn.Module</code> objects</td></tr>
+        <tr><td>Transformations</td><td>Composable function transformations (<code>jit</code>, <code>grad</code>, <code>vmap</code>, <code>pmap</code>) are core</td><td>Primary focus on autodiff (autograd); transformations like <code>vmap</code> are recent additions</td></tr>
+        <tr><td>Use Case</td><td>High-performance research, scientific computing, novel architectures</td><td>General-purpose production, large, mature ecosystem</td></tr>
+        <tr><td>Learning Curve</td><td>Steeper (requires understanding the functional paradigm and JAX transformations)</td><td>Gentler (feels like standard Python)</td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════
-  SLIDE 22: Patches & AdaLN
+  SLIDE 22 (moved): MLP → DiT
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide s2-color" data-idx="32d">
+  <div class="slide-header">
+    <span class="session-tag s2">Session 2 · NB06</span>
+    <span class="timing">1:13</span>
+  </div>
+  <div class="slide-title">MLP → <span class="hl2">Diffusion Transformer</span></div>
+  <div class="slide-body">
+    <div class="two-col">
+      <div>
+        <div class="label">Why the MLP doesn't scale</div>
+        <ul style="margin-top:.7rem">
+          <li>Flattens spatial structure: no locality or equivariance</li>
+          <li>Parameters grow quadratically with resolution</li>
+          <li>No attention: can't model long-range dependencies</li>
+        </ul>
+      </div>
+      <div>
+        <div class="label">DiT (Peebles &amp; Xie 2022)</div>
+        <ul style="margin-top:.7rem">
+          <li>Split image into patches → treat as a token sequence</li>
+          <li>Transformer processes patches with self-attention</li>
+          <li>Conditioning via Adaptive Layer Norm: not concatenation</li>
+        </ul>
+      </div>
+    </div>
+    <div style="margin-top:.8rem">
+      <div class="label">The data flow</div>
+      <div style="margin-top:.5rem;background:#fff;border-radius:6px;padding:.8rem 1rem .5rem;text-align:center">
+        <img src="img/dit-architecture.png" alt="DiT architecture: noised latent is patchified and embedded, passed through N DiT blocks conditioned on timestep and label via Adaptive Layer Norm, then unpatchified back to noise and variance predictions" style="max-width:100%;max-height:34vh;display:inline-block">
+        <div style="font-size:.78rem;color:#6b6f8a;margin-top:.4rem">Peebles &amp; Xie, <em>Scalable Diffusion Models with Transformers</em>, 2022</div>
+      </div>
+    </div>
+    <div style="margin-top:.6rem">
+      <div class="label">What changes</div>
+      <ul style="margin-top:.4rem">
+        <li>Model: pure-JAX dict → <strong>Flax NNX</strong> module class</li>
+        <li>Training: <code>jax.value_and_grad</code> → <code>nnx.value_and_grad</code> + <code>nnx.Optimizer</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 22a: Patchify
 ═══════════════════════════════════════════════════════════════════ -->
 <div class="slide s2-color" data-idx="33">
   <div class="slide-header">
     <span class="session-tag s2">Session 2 · NB06</span>
     <span class="timing">1:14</span>
   </div>
-  <div class="slide-title">Patches &amp; <span class="hl2">AdaLN</span></div>
+  <div class="slide-title"><span class="hl2">Patchify</span></div>
   <div class="slide-body">
     <div class="two-col">
       <div>
-        <div class="label">Patch embedding</div>
-        <div class="diagram" style="margin-top:.6rem">32×32×3  →  <span class="hi">64 patches</span>  of  4×4×3=48
+        <ul>
+          <li>Diffusion works on noisy <strong>latent</strong> representations, compressed by a separate autoencoder (e.g. 256×256×3 image → 32×32×4 latent)</li>
+          <li>The latent is broken into a sequence of non-overlapping P×P patches with a single conv layer (e.g. 32×32×4 latent → D tokens)</li>
+        </ul>
+        <div class="diagram" style="margin-top:1rem">32×32×3  →  <span class="hi">64 patches</span>  of  4×4×3=48
 each patch  →  Linear(48, 256)  →  <span class="hi">[64, 256]</span>
 + learned positional embedding        <span class="hi2">[64, 256]</span></div>
       </div>
+      <div style="background:#fff;border-radius:6px;padding:.8rem 1rem .5rem;text-align:center">
+        <img src="img/dit-highlight-patchify.png" alt="DiT architecture diagram with the Patchify block highlighted" style="max-width:100%;max-height:44vh;display:inline-block">
+        <div style="font-size:.78rem;color:#6b6f8a;margin-top:.4rem">Peebles &amp; Xie, <em>Scalable Diffusion Models with Transformers</em>, 2022</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 22b: Class embeddings
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide s2-color" data-idx="33b">
+  <div class="slide-header">
+    <span class="session-tag s2">Session 2 · NB06</span>
+    <span class="timing">1:16</span>
+  </div>
+  <div class="slide-title">Class <span class="hl2">embeddings</span></div>
+  <div class="slide-body">
+    <div class="two-col">
       <div>
-        <div class="label">Adaptive Layer Norm</div>
-        <div class="diagram" style="margin-top:.6rem">cond <span class="dim">[B,d]</span>  →  Linear(d→4d)
+        <ul>
+          <li>Class embedding conditions the content being generated</li>
+          <li><strong>Continuous embedding:</strong> a discrete class becomes a continuous, high-dimensional vector via a standard embedding-table lookup</li>
+          <li><strong>MLP encoding:</strong> the embedding is passed through 2 MLP layers to create a dense, context-aware class embedding</li>
+        </ul>
+      </div>
+      <div style="background:#fff;border-radius:6px;padding:.8rem 1rem .5rem;text-align:center">
+        <img src="img/dit-highlight-class-embed.png" alt="DiT architecture diagram with the class-label input highlighted" style="max-width:100%;max-height:44vh;display:inline-block">
+        <div style="font-size:.78rem;color:#6b6f8a;margin-top:.4rem">Peebles &amp; Xie, <em>Scalable Diffusion Models with Transformers</em>, 2022</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 22c: Timestamp embeddings
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide s2-color" data-idx="33c">
+  <div class="slide-header">
+    <span class="session-tag s2">Session 2 · NB06</span>
+    <span class="timing">1:18</span>
+  </div>
+  <div class="slide-title">Timestep <span class="hl2">embeddings</span></div>
+  <div class="slide-body">
+    <div class="two-col">
+      <div>
+        <ul>
+          <li>Tells the model the current noise level t ∈ [0, max_period], so it knows how much to denoise</li>
+          <li><strong>Positional embedding:</strong> the raw timestep t is first encoded with a sinusoidal positional encoding</li>
+          <li><strong>MLP encoding:</strong> the embedding is passed through 2 MLP layers to create a dense, context-aware time embedding</li>
+        </ul>
+      </div>
+      <div style="background:#fff;border-radius:6px;padding:.8rem 1rem .5rem;text-align:center">
+        <img src="img/dit-highlight-timestep-embed.png" alt="DiT architecture diagram with the timestep input highlighted" style="max-width:100%;max-height:44vh;display:inline-block">
+        <div style="font-size:.78rem;color:#6b6f8a;margin-top:.4rem">Peebles &amp; Xie, <em>Scalable Diffusion Models with Transformers</em>, 2022</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 22d: DiT Block
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide s2-color" data-idx="33d">
+  <div class="slide-header">
+    <span class="session-tag s2">Session 2 · NB06</span>
+    <span class="timing">1:20</span>
+  </div>
+  <div class="slide-title">DiT <span class="hl2">block</span></div>
+  <div class="slide-body">
+    <div class="two-col">
+      <div>
+        <ul>
+          <li><strong>Transformer core:</strong> replaces the U-Net's conv layers with standard multi-head self-attention and a feed-forward network</li>
+          <li><strong>Adaptive conditioning:</strong> an adaptive norm layer injects the timestep and class information into the block, controlling denoising with zero-initialized scaling factors for stability</li>
+        </ul>
+      </div>
+      <div style="background:#fff;border-radius:6px;padding:.8rem 1rem .5rem;text-align:center">
+        <img src="img/dit-highlight-block.png" alt="DiT architecture diagram with the DiT block highlighted" style="max-width:100%;max-height:44vh;display:inline-block">
+        <div style="font-size:.78rem;color:#6b6f8a;margin-top:.4rem">Peebles &amp; Xie, <em>Scalable Diffusion Models with Transformers</em>, 2022</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+  SLIDE 22e: AdaLN
+═══════════════════════════════════════════════════════════════════ -->
+<div class="slide s2-color" data-idx="33e">
+  <div class="slide-header">
+    <span class="session-tag s2">Session 2 · NB06</span>
+    <span class="timing">1:22</span>
+  </div>
+  <div class="slide-title"><span class="hl2">AdaLN</span></div>
+  <div class="slide-body">
+    <div class="two-col">
+      <div>
+        <ul>
+          <li>Adaptive Layer Norm Zero: the best-performing method the DiT paper found for conditioning the transformer</li>
+          <li>The timestep and class embeddings are summed into a single conditioning vector, fixed across all DiT blocks</li>
+          <li>The layer-norm γ (scale) and β (shift), plus the MHA gate α, are all projected from that conditioning vector through a dense layer</li>
+        </ul>
+        <div class="diagram" style="margin-top:1rem">cond <span class="dim">[B,d]</span>  →  Linear(d→4d)
 <span class="dim">  ↓</span>
 γ<sub>1</sub>, β<sub>1</sub>, γ<sub>2</sub>, β<sub>2</sub>  (shift &amp; scale)
 
@@ -1352,8 +1463,12 @@ x  →  LayerNorm  →  <span class="hi">(1+γ<sub>1</sub>)·x + β<sub>1</sub><
 x  →  LayerNorm  →  <span class="hi">(1+γ<sub>2</sub>)·x + β<sub>2</sub></span>
    →  MLP  →  + x</div>
       </div>
+      <div style="background:#fff;border-radius:6px;padding:.8rem 1rem .5rem;text-align:center">
+        <img src="img/dit-highlight-adaln.png" alt="DiT architecture diagram with the AdaLN conditioning path highlighted" style="max-width:100%;max-height:44vh;display:inline-block">
+        <div style="font-size:.78rem;color:#6b6f8a;margin-top:.4rem">Peebles &amp; Xie, <em>Scalable Diffusion Models with Transformers</em>, 2022</div>
+      </div>
     </div>
-    <p style="font-size:.88rem;color:var(--muted)">cond = TimestepEmbedder(t) + class_embed[c]: both time and class condition every block.</p>
+    <p style="font-size:1.1rem;color:var(--muted);margin-top:.6rem">cond = TimestepEmbedder(t) + class_embed[c]: both time and class condition every block.</p>
   </div>
 </div>
 
@@ -1363,18 +1478,18 @@ x  →  LayerNorm  →  <span class="hi">(1+γ<sub>2</sub>)·x + β<sub>2</sub><
 <div class="slide hot" data-idx="34">
   <div class="slide-header">
     <span class="session-tag hot">Hands-on · NB06</span>
-    <span class="timing">1:20</span>
+    <span class="timing">1:24</span>
   </div>
   <div class="slide-title">DiT <span class="hl">exercises</span></div>
   <div class="slide-body">
     <div class="exercise-list">
-      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">TimestepEmbedder<span class="arg">.__call__(t)</span></span><span style="color:var(--muted);font-size:.88rem">: vmap sinusoidal_embedding · Linear · Tanh</span><span class="time-badge">6 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">PatchEmbed<span class="arg">.__call__(x)</span></span><span style="color:var(--muted);font-size:.88rem">: reshape → transpose → flatten → proj</span><span class="time-badge">6 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">AdaLNBlock<span class="arg">.__call__(x, cond)</span></span><span style="color:var(--muted);font-size:.88rem">: split adaLN output · attn + mlp residuals</span><span class="time-badge">8 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">4</span><span class="exercise-fn">DiT<span class="arg">.__call__(xt, t, c)</span></span><span style="color:var(--muted);font-size:.88rem">: embed → condition → blocks → unembed</span><span class="time-badge">5 min</span></div>
-      <div class="exercise-item"><span class="exercise-num">5</span><span class="exercise-fn">train_step<span class="arg">(model, optimizer, ...)</span></span><span style="color:var(--muted);font-size:.88rem">: nnx.value_and_grad · optimizer.update</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">1</span><span class="exercise-fn">TimestepEmbedder<span class="arg">.__call__(t)</span></span><span style="color:var(--muted);font-size:1.1rem">: vmap sinusoidal_embedding · Linear · Tanh</span><span class="time-badge">6 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">2</span><span class="exercise-fn">PatchEmbed<span class="arg">.__call__(x)</span></span><span style="color:var(--muted);font-size:1.1rem">: reshape → transpose → flatten → proj</span><span class="time-badge">6 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">3</span><span class="exercise-fn">AdaLNBlock<span class="arg">.__call__(x, cond)</span></span><span style="color:var(--muted);font-size:1.1rem">: split adaLN output · attn + mlp residuals</span><span class="time-badge">8 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">4</span><span class="exercise-fn">DiT<span class="arg">.__call__(xt, t, c)</span></span><span style="color:var(--muted);font-size:1.1rem">: embed → condition → blocks → unembed</span><span class="time-badge">5 min</span></div>
+      <div class="exercise-item"><span class="exercise-num">5</span><span class="exercise-fn">train_step<span class="arg">(model, optimizer, ...)</span></span><span style="color:var(--muted);font-size:1.1rem">: nnx.value_and_grad · optimizer.update</span><span class="time-badge">5 min</span></div>
     </div>
-    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:.85rem;font-family:var(--mono)">open notebooks/06_dit.ipynb</div>
+    <div style="margin-top:auto;padding-top:1rem;color:var(--muted);font-size:1.1rem;font-family:var(--mono)">open notebooks/06_dit.ipynb</div>
   </div>
 </div>
 
@@ -1389,9 +1504,9 @@ x  →  LayerNorm  →  <span class="hi">(1+γ<sub>2</sub>)·x + β<sub>2</sub><
   <div class="slide-title">Where <span class="hl2">this leads</span></div>
   <div class="slide-body">
     <div class="three-col">
-      <div class="card"><div class="card-head">Text-to-image</div><div style="font-size:.85rem;color:var(--muted);line-height:1.65">Swap class_embed for a text encoder (CLIP, T5). Cross-attention or AdaLN on text tokens. Same training loop.</div></div>
-      <div class="card"><div class="card-head">Flow matching</div><div style="font-size:.85rem;color:var(--muted);line-height:1.65">Replace the noise schedule with a straight-line interpolation. Fewer steps, faster convergence. FLUX uses this.</div></div>
-      <div class="card"><div class="card-head">Scale</div><div style="font-size:.85rem;color:var(--muted);line-height:1.65">Larger DiT (depth, width), larger dataset, longer training. The architecture you built today is the core.</div></div>
+      <div class="card"><div class="card-head">Text-to-image</div><div style="font-size:1.1rem;color:var(--muted);line-height:1.65">Swap class_embed for a text encoder (CLIP, T5). Cross-attention or AdaLN on text tokens. Same training loop.</div></div>
+      <div class="card"><div class="card-head">Flow matching</div><div style="font-size:1.1rem;color:var(--muted);line-height:1.65">Replace the noise schedule with a straight-line interpolation. Fewer steps, faster convergence. FLUX uses this.</div></div>
+      <div class="card"><div class="card-head">Scale</div><div style="font-size:1.1rem;color:var(--muted);line-height:1.65">Larger DiT (depth, width), larger dataset, longer training. The architecture you built today is the core.</div></div>
     </div>
     <div style="margin-top:1.5rem;padding:1.2rem 1.5rem;background:var(--surface);border:1px solid var(--border);border-radius:6px">
       <div class="label">You built</div>
